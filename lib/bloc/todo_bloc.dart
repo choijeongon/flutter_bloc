@@ -47,16 +47,20 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
           createdAt: DateTime.now().toString(),
         );
 
+        //기존 상태를 저장
         final prevTodos = [
           ...parsedState.todos,
         ];
 
+        //기존 상태 + 새로운 데이터
         final newTodos = [...prevTodos, newTodo];
 
+        //아직 서버에 저장되지 않았지만 미리 보여주는 방식
         yield Loaded(todos: newTodos);
 
         final resp = await repository.createTodo(newTodo);
 
+        //추후에 서버에 받은 데이터로 업데이트
         yield Loaded(
           todos: [
             ...prevTodos,
