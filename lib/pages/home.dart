@@ -17,7 +17,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => TodoBloc(repository: TodoRepository()),
-      child: HomeWidget(),
+      child: const HomeWidget(),
     );
   }
 }
@@ -37,6 +37,7 @@ class _HomeWidgetState extends State<HomeWidget> {
     // TODO: implement initState
     super.initState();
 
+    // ListTodosEvent를 처음에 불러줌
     BlocProvider.of<TodoBloc>(context).add(
       ListTodoEvent(),
     );
@@ -48,6 +49,7 @@ class _HomeWidgetState extends State<HomeWidget> {
       appBar: AppBar(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          //BlocProvider.of<TodoBloc>(context).add랑 같은 문법
           context.read<TodoBloc>().add(
                 CreateTodoEvent(
                   title: title,
@@ -71,49 +73,52 @@ class _HomeWidgetState extends State<HomeWidget> {
               height: 16.0,
             ),
             Expanded(
-              child: BlocBuilder<TodoBloc, TodoState>(builder: (_, state) {
-                if (state is Empty) {
+              //만들어진 TodoBloc을 사용하기 위해 BlocBuilder를 사용해야 한ㅏ.
+              child: BlocBuilder<TodoBloc, TodoState>(
+                builder: (_, state) {
+                  if (state is Empty) {
+                    return Container();
+                  } else if (state is Error) {
+                    return Text(state.message);
+                  } else if (state is Loading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (state is Loaded) {
+                    final items = state.todos;
+
+                    return ListView.separated(
+                      itemBuilder: (_, index) {
+                        final item = items[index];
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.title,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                BlocProvider.of<TodoBloc>(context).add(
+                                  DeleteTodoEvent(todo: item),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.delete,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      separatorBuilder: (_, index) => const Divider(),
+                      itemCount: items.length,
+                    );
+                  }
+
                   return Container();
-                } else if (state is Error) {
-                  return Text(state.message);
-                } else if (state is Loading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (state is Loaded) {
-                  final items = state.todos;
-
-                  return ListView.separated(
-                    itemBuilder: (_, index) {
-                      final item = items[index];
-
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.title,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              BlocProvider.of<TodoBloc>(context).add(
-                                DeleteTodoEvent(todo: item),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.delete,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                    separatorBuilder: (_, index) => const Divider(),
-                    itemCount: items.length,
-                  );
-                }
-
-                return Container();
-              }),
+                },
+              ),
             )
           ],
         ),
